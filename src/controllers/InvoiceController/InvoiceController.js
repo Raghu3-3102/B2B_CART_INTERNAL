@@ -54,7 +54,7 @@ export const createInvoice = async (req, res) => {
       attachments,
     });
 
-    const agentData = await Agent.findById(assignedAgent);
+    const agentData = await Agent.findById(agentId);
         if (agentData) {
           agentData.InvoiceCount = (agentData.InvoiceCount || 0) + 1;
           agentData. IndividualsId = [...(agentData. IndividualsId || []), savedCertificate._id];
