@@ -4,6 +4,7 @@ import Agent from "../../models/AgentModel/AgentModel.js";
 /**
  * ✅ Create Invoice (with file upload)
  */
+
 export const createInvoice = async (req, res) => {
   try {
     const {
@@ -25,6 +26,41 @@ export const createInvoice = async (req, res) => {
       paymentInstallments,
       terms,
     } = req.body;
+
+    const parsedTerms =
+      typeof terms === "string" ? JSON.parse(terms) : terms;
+
+    // ✅ AUTO CALCULATIONS BASED ON CURRENCY
+    // ✅ AUTO CALCULATIONS BASED ON CURRENCY
+const updatedTerms = parsedTerms.map((term) => {
+  if (currency === "INR") {
+    // GST Calculation
+    const gstAmt = (term.baseAmount * term.gstPercentage) / 100;
+    const termTotal = term.baseAmount + gstAmt - (term.TDSAmmount || 0);
+
+    return {
+      ...term,
+      gstAmount: gstAmt,
+      termTotal,
+      exchangeRate: undefined,
+      totalInINR: undefined,
+    };
+  } else {
+    // NON INR Case
+    const totalInINR = term.termTotal * term.exchangeRate;
+
+    // ✅ REMOVE GST/TDS FIELDS FOR NON-INR
+    delete term.gstPercentage;
+    delete term.gstAmount;
+    delete term.TDSAmmount;
+
+    return {
+      ...term,
+      totalInINR,
+    };
+  }
+});
+
 
     const attachments =
       req.files?.attachments?.map((file) => ({
@@ -50,16 +86,17 @@ export const createInvoice = async (req, res) => {
       baseClosureAmount,
       moneyReceived,
       paymentInstallments,
-      terms: typeof terms === "string" ? JSON.parse(terms) : terms, // ✅ FIX
+      terms: updatedTerms,
       attachments,
     });
 
+    // ✅ Agent Invoice count update
     const agentData = await Agent.findById(agentId);
-        if (agentData) {
-          agentData.InvoiceCount = (agentData.InvoiceCount || 0) + 1;
-          agentData. IndividualsId = [...(agentData. IndividualsId || []), newInvoice._id];
-          await agentData.save();
-        }
+    if (agentData) {
+      agentData.InvoiceCount = (agentData.InvoiceCount || 0) + 1;
+      agentData.InvoiceIds = [...(agentData.InvoiceIds || []), newInvoice._id];
+      await agentData.save();
+    }
 
     await newInvoice.save();
 
@@ -73,6 +110,7 @@ export const createInvoice = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error", error });
   }
 };
+
 
 
 
