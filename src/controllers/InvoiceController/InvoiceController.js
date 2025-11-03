@@ -30,37 +30,34 @@ export const createInvoice = async (req, res) => {
     const parsedTerms =
       typeof terms === "string" ? JSON.parse(terms) : terms;
 
-    // ✅ AUTO CALCULATIONS BASED ON CURRENCY
-    // ✅ AUTO CALCULATIONS BASED ON CURRENCY
-const updatedTerms = parsedTerms.map((term) => {
-  if (currency === "INR") {
-    // GST Calculation
-    const gstAmt = (term.baseAmount * term.gstPercentage) / 100;
-    const termTotal = term.baseAmount + gstAmt - (term.TDSAmmount || 0);
+    const updatedTerms = parsedTerms.map((term) => {
+      if (currency === "INR") {
+        const gstAmt = (term.baseAmount * term.gstPercentage) / 100;
+        const termTotal =
+          term.baseAmount + gstAmt - (term.TDSAmmount || 0);
 
-    return {
-      ...term,
-      gstAmount: gstAmt,
-      termTotal,
-      exchangeRate: undefined,
-      totalInINR: undefined,
-    };
-  } else {
-    // NON INR Case
-    const totalInINR = term.termTotal * term.exchangeRate;
+        return {
+          termName: term.termName,
+          baseAmount: term.baseAmount,
+          gstPercentage: term.gstPercentage,
+          gstAmount: gstAmt,
+          TDSAmmount: term.TDSAmmount,
+          termTotal,
+          status: term.status || "Pending",
+        };
+      } else {
+        const totalInINR = term.termTotal * term.exchangeRate;
 
-    // ✅ REMOVE GST/TDS FIELDS FOR NON-INR
-    delete term.gstPercentage;
-    delete term.gstAmount;
-    delete term.TDSAmmount;
-
-    return {
-      ...term,
-      totalInINR,
-    };
-  }
-});
-
+        return {
+          termName: term.termName,
+          baseAmount: term.baseAmount,
+          termTotal: term.termTotal,
+          exchangeRate: term.exchangeRate,
+          totalInINR,
+          status: term.status || "Pending",
+        };
+      }
+    });
 
     const attachments =
       req.files?.attachments?.map((file) => ({
@@ -90,7 +87,7 @@ const updatedTerms = parsedTerms.map((term) => {
       attachments,
     });
 
-    // ✅ Agent Invoice count update
+    // ✅ Update agent invoice count
     const agentData = await Agent.findById(agentId);
     if (agentData) {
       agentData.InvoiceCount = (agentData.InvoiceCount || 0) + 1;
@@ -107,9 +104,14 @@ const updatedTerms = parsedTerms.map((term) => {
     });
   } catch (error) {
     console.error("Create Invoice Error:", error);
-    return res.status(500).json({ success: false, message: "Server Error", error });
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error,
+    });
   }
 };
+
 
 
 
@@ -147,26 +149,53 @@ export const getInvoiceById = async (req, res) => {
  */
 export const updateInvoice = async (req, res) => {
   try {
+    const invoiceId = req.params.id;
+
+    // ✅ Fetch existing invoice before update
+    const existingInvoice = await Invoice.findById(invoiceId);
+    if (!existingInvoice) {
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+    }
 
     const updateData = { ...req.body };
 
-    console.log("📥 Received Body:", req.body);
+    // ✅ Convert terms if string (form-data case)
+    if (req.body.terms && typeof req.body.terms === "string") {
+      updateData.terms = JSON.parse(req.body.terms);
+    }
 
-    if (req.files && req.files.length > 0) {
-      updateData.attachments = req.files.map(file => ({
+    // ✅ Handle new attachments (optional)
+    if (req.files?.attachments?.length > 0) {
+      updateData.attachments = req.files.attachments.map(file => ({
         fileName: file.originalname,
         fileUrl: file.path,
         fileType: file.mimetype,
       }));
     }
 
-    // ✅ FIX → Do NOT parse terms if already an object
-    if (req.body.terms && typeof req.body.terms === "string") {
-      updateData.terms = JSON.parse(req.body.terms);
+    // ✅ Handle Agent Change
+    if (req.body.agentId && req.body.agentId !== existingInvoice.agentId.toString()) {
+      const oldAgent = await Agent.findById(existingInvoice.agentId);
+      const newAgent = await Agent.findById(req.body.agentId);
+
+      if (oldAgent) {
+        oldAgent.InvoiceCount = Math.max(0, oldAgent.InvoiceCount - 1);
+        oldAgent.InvoiceIds = oldAgent.InvoiceIds.filter(
+          (invId) => invId.toString() !== invoiceId
+        );
+        await oldAgent.save();
+      }
+
+      if (newAgent) {
+        newAgent.InvoiceCount = (newAgent.InvoiceCount || 0) + 1;
+        newAgent.InvoiceIds.push(invoiceId);
+        await newAgent.save();
+      }
     }
 
+    // ✅ Update invoice
     const updatedInvoice = await Invoice.findByIdAndUpdate(
-      req.params.id,
+      invoiceId,
       updateData,
       { new: true }
     );
@@ -179,14 +208,10 @@ export const updateInvoice = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Update Invoice Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error,
-    });
+    return res.status(500).json({ success: false, message: "Server Error", error });
   }
 };
+
 
 
 
@@ -196,20 +221,39 @@ export const updateInvoice = async (req, res) => {
  */
 export const deleteInvoice = async (req, res) => {
   try {
-   const data =  await Invoice.findByIdAndDelete(req.params.id);
-        const { agentId } = await Invoice.findById(req.params.id);
+    const id = req.params.id;
+
+    // ✅ Get invoice BEFORE deleting
+    const invoice = await Invoice.findById(id);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+    }
+
+    const agentId = invoice.agentId;
+
+    // ✅ Delete invoice
+    await Invoice.findByIdAndDelete(id);
+
+    // ✅ Remove Invoice reference from Agent
     if (agentId) {
-          const agent = await Agent.findById(agentId);
-          if (agent) {
-            agent.InvoiceCount = Math.max(0, agent.InvoiceCount - 1); // prevent negative count
-            agent.InvoiceIds = agent.InvoiceIds.filter(
-              (companyId) => companyId.toString() !== id
-            );
-            await agent.save();
-          }
-        }
-    return res.status(200).json({ success: true, message: "Invoice deleted successfully" });
+      const agent = await Agent.findById(agentId);
+      if (agent) {
+        agent.InvoiceCount = Math.max(0, agent.InvoiceCount - 1);
+        agent.InvoiceIds = agent.InvoiceIds.filter(
+          (invId) => invId.toString() !== id
+        );
+        await agent.save();
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Invoice deleted successfully ✅"
+    });
+
   } catch (error) {
-    return res.status(500).json({ success: false, error });
+    console.error("❌ Delete Invoice Error:", error);
+    return res.status(500).json({ success: false, message: "Server Error", error });
   }
 };
+

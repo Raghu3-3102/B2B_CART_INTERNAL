@@ -7,27 +7,27 @@ const termSchema = new mongoose.Schema({
 
   /** ✅ GST only for INR */
  
-  gstPercentage: {
-    type: Number,
-    default: 18,
-    required: function () {
-      return this.parent().currency === "INR";
-    },
+ gstPercentage: {
+  type: Number,
+  required: function () {
+    return this.parent().currency === "INR";
   },
-  gstAmount: {
-    type: Number,
-    default: 0,
-    required: function () {
-      return this.parent().currency === "INR";
-    },
+},
+
+gstAmount: {
+  type: Number,
+  required: function () {
+    return this.parent().currency === "INR";
   },
-     TDSAmmount: {
-    type: Number,
-    default: 18,
-    required: function () {
-      return this.parent().currency === "INR";
-    },
+},
+
+TDSAmmount: {
+  type: Number,
+  required: function () {
+    return this.parent().currency === "INR";
   },
+},
+
 
   /** ✅ termTotal ALWAYS stores in selected currency (INR / USD / EUR) */
   termTotal: { type: Number, required: true },
