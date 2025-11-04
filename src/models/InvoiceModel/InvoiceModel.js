@@ -89,6 +89,8 @@ const invoiceSchema = new mongoose.Schema(
     baseClosureAmount: { type: Number, required: true },
     moneyReceived: { type: Number, default: 0 },
     paymentInstallments: { type: Number, default: 1 },
+    ClientName: { type: String },
+    SacCode: { type: String },
 
     /** ✅ Multi installment terms */
     terms: [termSchema],

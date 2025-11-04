@@ -15,6 +15,7 @@ import profilerouter from "./ProfileRoutes/ProfileRouter.js"
 import InvoiceRouter from "./invoiceRoutes/invoiceRoutes.js";
 import StandardRouter from "./standardRoutes/standardRoutes.js";
 // import userRoutes from "./userRoutes.js"; // if you have user module
+import CompanyDetailsRouter from "./companyDetailsRoutes/companyDetailsRouter.js";
 
 const router = express.Router();
 
@@ -33,6 +34,7 @@ router.use("/profile",profilerouter)
 // router.use("/Vendor",VendorRouter)
 router.use("/invoices", InvoiceRouter);
 router.use("/standards", StandardRouter);
+router.use("/companyDetails", CompanyDetailsRouter);
 
 // router.use("/users", userRoutes); // Add user module later
 
