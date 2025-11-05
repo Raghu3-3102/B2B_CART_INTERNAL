@@ -76,6 +76,7 @@ const invoiceSchema = new mongoose.Schema(
     city: { type: String },
     address: { type: String },
     website: { type: String },
+    componyDetails:{type:mongoose.Schema.Types.ObjectId,ref:"CompanyDetails"},
 
     /** ✅ GST NUMBER required only for INR */
     gstNumber: {

@@ -16,6 +16,7 @@ import InvoiceRouter from "./invoiceRoutes/invoiceRoutes.js";
 import StandardRouter from "./standardRoutes/standardRoutes.js";
 // import userRoutes from "./userRoutes.js"; // if you have user module
 import CompanyDetailsRouter from "./companyDetailsRoutes/companyDetailsRouter.js";
+import pendingPaymentsRoutes from "./PendingRoutes/PendingRoutes.js";
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.use("/profile",profilerouter)
 router.use("/invoices", InvoiceRouter);
 router.use("/standards", StandardRouter);
 router.use("/companyDetails", CompanyDetailsRouter);
-
+router.use("/Pendingpayments", pendingPaymentsRoutes)
 // router.use("/users", userRoutes); // Add user module later
 
 export default router;

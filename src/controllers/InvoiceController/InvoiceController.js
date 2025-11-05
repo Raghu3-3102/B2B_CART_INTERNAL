@@ -1,6 +1,6 @@
 import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
 import Agent from "../../models/AgentModel/AgentModel.js";
-
+import { permissionMiddleware } from "../../middleware/PermissionMidilewere.js";
 /**
  * ✅ Create Invoice (with file upload)
  */
@@ -19,6 +19,7 @@ export const createInvoice = async (req, res) => {
       city,
       address,
       website,
+      componyDetails,
       gstNumber,
       ClientName,
       SacCode,
@@ -80,6 +81,7 @@ export const createInvoice = async (req, res) => {
       city,
       address,
       website,
+      componyDetails,
       gstNumber,
       ClientName,
       SacCode,
