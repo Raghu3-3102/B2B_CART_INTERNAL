@@ -28,6 +28,11 @@ export const createInvoice = async (req, res) => {
       moneyReceived,
       paymentInstallments,
       terms,
+      TotalBaseAmount,
+      TotalGSTAmount,
+      TotalTDSAmount,
+      GrandTotalBaseAmmount,
+      PendingPaymentInINR
     } = req.body;
 
     const parsedTerms =
@@ -35,28 +40,24 @@ export const createInvoice = async (req, res) => {
 
     const updatedTerms = parsedTerms.map((term) => {
       if (currency === "INR") {
-        const gstAmt = (term.baseAmount * term.gstPercentage) / 100;
-        const termTotal =
-          term.baseAmount + gstAmt - (term.TDSAmmount || 0);
-
         return {
           termName: term.termName,
           baseAmount: term.baseAmount,
           gstPercentage: term.gstPercentage,
-          gstAmount: gstAmt,
+          gstAmount: term.gstAmount,
           TDSAmmount: term.TDSAmmount,
-          termTotal,
+          termTotal:term.termTotal,
           status: term.status || "Pending",
         };
       } else {
-        const totalInINR = term.termTotal * term.exchangeRate;
+    
 
         return {
           termName: term.termName,
           baseAmount: term.baseAmount,
           termTotal: term.termTotal,
           exchangeRate: term.exchangeRate,
-          totalInINR,
+          totalInINR:term.totalInINR,
           status: term.status || "Pending",
         };
       }
@@ -90,6 +91,11 @@ export const createInvoice = async (req, res) => {
       moneyReceived,
       paymentInstallments,
       terms: updatedTerms,
+      TotalBaseAmount,
+      TotalGSTAmount,
+      TotalTDSAmount,
+      GrandTotalBaseAmmount,
+      PendingPaymentInINR,
       attachments,
     });
 

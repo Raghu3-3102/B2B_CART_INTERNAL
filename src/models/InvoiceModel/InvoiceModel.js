@@ -96,6 +96,22 @@ const invoiceSchema = new mongoose.Schema(
     /** ✅ Multi installment terms */
     terms: [termSchema],
 
+    TotalBaseAmount: { type: Number, required: true },
+    TotalGSTAmount: { 
+      type:Number,
+      required: function () {
+        return this.currency === "INR";
+      },
+     },
+    TotalTDSAmount: { 
+      type: Number,
+      required: function () {
+        return this.currency === "INR";
+      },
+     },
+    GrandTotalBaseAmmount: { type: Number, required: true },
+    PendingPaymentInINR: { type: Number, required: true },
+
     attachments: [
       {
         fileName: { type: String },
