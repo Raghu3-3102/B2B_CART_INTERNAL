@@ -92,6 +92,7 @@ const invoiceSchema = new mongoose.Schema(
     paymentInstallments: { type: Number, default: 1 },
     ClientName: { type: String },
     SacCode: { type: String },
+    certificationType: { type: String },
 
     /** ✅ Multi installment terms */
     terms: [termSchema],
