@@ -13,6 +13,15 @@ export const getAllCompanies = async (req, res) => {
   }
 };
 
+export const getAllCompaniesNameAndId = async (req, res) => {
+  try {
+    const companies = await Company.find().select("_id companyName")
+    res.status(200).json(companies);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get company by ID
 export const getCompanyById = async (req, res) => {
   try {
