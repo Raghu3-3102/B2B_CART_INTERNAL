@@ -48,8 +48,8 @@ const termSchema = new mongoose.Schema({
   /** ✅ Modified - Now Close / Lost also allowed */
   status: {
     type: String,
-    enum: [ "Close", "Lost"], // ✅ Updated as requested
-    default: "Close",
+    enum: [ "Close", "Lost","Active"], // ✅ Updated as requested
+    default: "Active",
   },
 });
 

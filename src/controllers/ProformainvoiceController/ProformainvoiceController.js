@@ -47,7 +47,7 @@ export const createProformaInvoice = async (req, res) => {
           gstAmount: term.gstAmount,
           TDSAmount: term.TDSAmount,
           termTotal:term.termTotal,
-          status: term.status || "Close",
+          status: term.status || "Active",
         };
       } else {
     
@@ -58,7 +58,7 @@ export const createProformaInvoice = async (req, res) => {
           termTotal: term.termTotal,
           exchangeRate: term.exchangeRate,
           totalInINR:term.totalInINR,
-          status: term.status || "Close",
+          status: term.status || "Active",
         };
       }
     });
