@@ -67,7 +67,6 @@ const proformaInvoiceSchema = new mongoose.Schema(
     agentId: { type: mongoose.Schema.Types.ObjectId, ref: "Agent" },
 
     companyName: { type: String, required: true },
-     companyId:{type:mongoose.Schema.Types.ObjectId,ref:"Company"},
     email: { type: String, required: true },
     alternateEmails: [{ type: String }],
     phone: { type: String },
