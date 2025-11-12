@@ -45,12 +45,7 @@ const termSchema = new mongoose.Schema({
     },
   },
 
-  /** ✅ Modified - Now Close / Lost also allowed */
-  status: {
-    type: String,
-    enum: [ "Close", "Lost","Active"], // ✅ Updated as requested
-    default: "Active",
-  },
+  
 });
 
 /* ======================= PROFORMA INVOICE SCHEMA ======================= */
@@ -68,6 +63,12 @@ const proformaInvoiceSchema = new mongoose.Schema(
 
     companyName: { type: String, required: true },
     companyId:{type:mongoose.Schema.Types.ObjectId,ref:"Company"},
+    /** ✅ Modified - Now Close / Lost also allowed */
+  status: {
+    type: String,
+    enum: [ "Close", "Lost","Active"], // ✅ Updated as requested
+    default: "Active",
+  },
     email: { type: String, required: true },
     alternateEmails: [{ type: String }],
     phone: { type: String },
@@ -75,6 +76,7 @@ const proformaInvoiceSchema = new mongoose.Schema(
     city: { type: String },
     address: { type: String },
     website: { type: String },
+    proformaInvoiceDate: { type: Date, default: Date.now },
 
     componyDetails: {
       type: mongoose.Schema.Types.ObjectId,
@@ -89,7 +91,7 @@ const proformaInvoiceSchema = new mongoose.Schema(
       },
     },
 
-    standard: { type: String },
+    standard: { type: [String], default: [] },
     baseClosureAmount: { type: Number, required: true },
 
     /** ❌ Removed moneyReceived as requested */
@@ -102,30 +104,7 @@ const proformaInvoiceSchema = new mongoose.Schema(
     /** ✅ Updated terms */
     terms: [termSchema],
 
-    TotalBaseAmount: { type: Number, required: true },
-    TotalGSTAmount: {
-      type: Number,
-      required: function () {
-        return this.currency === "INR";
-      },
-    },
-    TotalTDSAmount: {
-      type: Number,
-      required: function () {
-        return this.currency === "INR";
-      },
-    },
-
-    GrandTotalBaseAmount: { type: Number, required: true },
-    PendingPaymentInINR: { type: Number, required: true },
-
-    attachments: [
-      {
-        fileName: { type: String },
-        fileUrl: { type: String },
-        fileType: { type: String },
-      },
-    ],
+    
   },
   { timestamps: true }
 );

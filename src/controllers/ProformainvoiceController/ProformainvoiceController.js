@@ -13,6 +13,8 @@ export const createProformaInvoice = async (req, res) => {
       currency,
       agentId,
       companyName,
+      status,
+      proformaInvoiceDate,
       companyId,
       email,
       alternateEmails,
@@ -49,7 +51,7 @@ export const createProformaInvoice = async (req, res) => {
           gstAmount: term.gstAmount,
           TDSAmount: term.TDSAmount,
           termTotal:term.termTotal,
-          status: term.status || "Active",
+         
         };
       } else {
     
@@ -60,7 +62,7 @@ export const createProformaInvoice = async (req, res) => {
           termTotal: term.termTotal,
           exchangeRate: term.exchangeRate,
           totalInINR:term.totalInINR,
-          status: term.status || "Active",
+       
         };
       }
     });
@@ -77,6 +79,8 @@ export const createProformaInvoice = async (req, res) => {
       currency,
       agentId,
       companyName,
+      status,
+      proformaInvoiceDate,
       companyId:companyId,
       email,
       alternateEmails,
@@ -298,3 +302,23 @@ export const deleteProformaInvoice = async (req, res) => {
   }
 };
 
+
+export const editStatusProformaInvoice = async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const { status } = req.body;
+    const updatedInvoice = await Invoice.findByIdAndUpdate(
+      invoiceId,
+      { status },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Invoice status updated successfully ✅",
+      updatedInvoice,
+    });
+  } catch (error) {
+    console.error("❌ Update Invoice Status Error:", error);
+    return res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};

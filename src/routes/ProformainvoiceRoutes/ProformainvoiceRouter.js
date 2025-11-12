@@ -4,7 +4,8 @@ import {
   getAllProformaInvoices,
   getProformaInvoiceById,
   updateProformaInvoice,
-  deleteProformaInvoice
+  deleteProformaInvoice,
+  editStatusProformaInvoice
 } from "../../controllers/ProformainvoiceController/ProformainvoiceController.js";
 
 import upload from "../../config/cloudinaryConfig.js";
@@ -28,5 +29,7 @@ router.put(
 );
 
 router.delete("/:id", deleteProformaInvoice);
+
+router.patch("/status/:id", editStatusProformaInvoice);
 
 export default router;
