@@ -163,7 +163,7 @@ export const createProformaInvoice = async (req, res) => {
  */
 export const getAllProformaInvoices = async (req, res) => {
   try {
-    const invoices = await Invoice.find().populate("agentId").populate("componyDetails");
+    const invoices = await Invoice.find().populate("agentId").populate("componyDetails").populate("standard");
     return res.status(200).json({ success: true, invoices });
   } catch (error) {
     return res.status(500).json({ success: false, error });

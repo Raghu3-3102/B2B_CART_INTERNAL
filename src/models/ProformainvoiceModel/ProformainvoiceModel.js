@@ -91,7 +91,7 @@ const proformaInvoiceSchema = new mongoose.Schema(
       },
     },
 
-    standard: { type: [String], default: [] },
+    standard: { type: [String], ref: "Standard" },
     baseClosureAmount: { type: Number, required: true },
 
     /** ❌ Removed moneyReceived as requested */
