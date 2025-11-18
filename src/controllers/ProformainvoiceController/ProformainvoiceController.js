@@ -176,7 +176,7 @@ export const getAllProformaInvoices = async (req, res) => {
  */
 export const getProformaInvoiceById = async (req, res) => {
   try {
-    const invoice = await Invoice.findById(req.params.id).populate("agentId").populate("componyDetails");
+    const invoice = await Invoice.findById(req.params.id).populate("agentId").populate("componyDetails").populate("standard");
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
     return res.status(200).json({ success: true, invoice });
