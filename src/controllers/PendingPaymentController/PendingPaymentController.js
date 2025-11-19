@@ -20,6 +20,54 @@ export const getPendingPayments = async (req, res) => {
   }
 };
 
+
+/**
+ * ✅ Group invoices by Standard
+ * One invoice contains one standard
+ */
+export const groupInvoicesByStandard = async (req, res) => {
+  try {
+    const invoices = await Invoice.find();
+
+    if (!invoices || invoices.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No invoices found",
+      });
+    }
+
+    // GROUPING LOGIC
+    const grouped = {};
+
+    invoices.forEach((inv) => {
+      const standard = inv.standard?.[0]; // since invoice has only one standard
+
+      if (!grouped[standard]) {
+        grouped[standard] = {
+          standard: standard,
+          totalInvoices: 0,
+          invoices: [],
+        };
+      }
+
+      grouped[standard].totalInvoices++;
+      grouped[standard].invoices.push(inv);
+    });
+
+    res.status(200).json({
+      success: true,
+      groupedStandards: Object.values(grouped),
+    });
+  } catch (error) {
+    console.error("Error grouping invoices by standard:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
 /**
  * ✅ Get pending terms for one specific invoice
  */

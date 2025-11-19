@@ -151,6 +151,20 @@ export const createInvoice = async (req, res) => {
 };
 
 
+export const getInvoiveByStanderdandcomponyName = async (req, res) => {
+  try {
+    const { standard, companyId } = req.params;
+    console.log("Standard:", standard, "Company ID:", companyId);
+    const invoices = await Invoice.find({
+      standard: standard,
+      companyId: companyId,
+    }).populate("agentId").populate("componyDetails").populate("standard");  
+    return res.status(200).json({ success: true, invoices });
+  } catch (error) {
+    return res.status(500).json({ success: false, error });
+  }
+};
+
 
 
 
@@ -160,7 +174,7 @@ export const createInvoice = async (req, res) => {
  */
 export const getAllInvoices = async (req, res) => {
   try {
-    const invoices = await Invoice.find().populate("agentId").populate("componyDetails");
+    const invoices = await Invoice.find().populate("agentId").populate("componyDetails").populate("standard");
     return res.status(200).json({ success: true, invoices });
   } catch (error) {
     return res.status(500).json({ success: false, error });

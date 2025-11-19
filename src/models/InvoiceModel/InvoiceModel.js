@@ -87,7 +87,9 @@ const invoiceSchema = new mongoose.Schema(
       },
     },
 
-    standard: { type: String },
+
+
+    standard: { type: [String], ref: "Standard" },
     baseClosureAmount: { type: Number, required: true },
     moneyReceived: { type: Number, default: 0 },
     paymentInstallments: { type: Number, default: 1 },
