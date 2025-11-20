@@ -335,3 +335,74 @@ export const deleteInvoice = async (req, res) => {
   }
 };
 
+export const getInvoicesFilter = async (req, res) => {
+  try {
+    const {
+      search,
+      companyName,
+      agentId,
+      status,
+      currency,
+      city,
+      country,
+      standard,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const filter = {};
+
+    /* 🔍 Search by company or invoice number */
+    if (search) {
+      filter.$or = [
+        { companyName: { $regex: search, $options: "i" } },
+        { invoiceNo: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (companyName) filter.companyName = companyName;
+    if (agentId) filter.agentId = agentId;
+    if (status) filter.status = status;
+    if (currency) filter.currency = currency;
+    if (city) filter.city = city;
+    if (country) filter.country = country;
+    if (standard) filter.standard = standard;
+
+    /* ⏳ Date range filter */
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    /* 📄 Pagination */
+    const skip = (page - 1) * limit;
+
+    const invoices = await Invoice.find(filter)
+      .populate("agentId")
+      .populate("companyId")
+      .populate("componyDetails")
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Invoice.countDocuments(filter);
+
+    res.status(200).json({
+      total,
+      page,
+      limit,
+      invoices,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Error fetching invoice list",
+      error: error.message,
+    });
+  }
+};
+
