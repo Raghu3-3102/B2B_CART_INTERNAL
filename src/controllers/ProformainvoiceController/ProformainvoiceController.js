@@ -64,6 +64,7 @@ export const createProformaInvoice = async (req, res) => {
           termTotal: term.termTotal,
           exchangeRate: term.exchangeRate,
           totalInINR:term.totalInINR,
+          BankingCharges:term.BankingCharges
        
         };
       }

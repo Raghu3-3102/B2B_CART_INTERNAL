@@ -45,6 +45,15 @@ const termSchema = new mongoose.Schema({
     },
   },
 
+   BankingCharges: {
+    type: Number,
+    required: function () {
+      return this.parent().currency !== "INR";
+    },
+  },
+
+ 
+
   
 });
 
