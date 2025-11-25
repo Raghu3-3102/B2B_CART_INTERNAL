@@ -1,3 +1,4 @@
+import { populate } from "dotenv";
 import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
 
 /**
@@ -5,20 +6,113 @@ import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
  */
 export const getPendingPayments = async (req, res) => {
   try {
-    const pendingInvoices = await Invoice.find({ "IsCompleted": "false" });
+    const result = await Invoice.aggregate([
+      // STEP 1: Find all invoices which are NOT completed
+      {
+        $match: {
+          IsCompleted: { $in: [false, "false", 0] }
+        }
+      },
 
-    res.status(200).json({
-      success: true,
-      pendingInvoices,
-    });
+      // STEP 2: Group keys we need (company + standard)
+      {
+        $group: {
+          _id: {
+            companyId: "$companyId",
+            standard: "$standard"
+          }
+        }
+      },
+
+      // STEP 3: Get all invoices for these groups
+      {
+        $lookup: {
+          from: "invoices",
+          let: { compId: "$_id.companyId", stdId: "$_id.standard" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$companyId", "$$compId"] },
+                    { $eq: ["$standard", "$$stdId"] }
+                  ]
+                }
+              }
+            },
+            { $sort: { createdAt: -1 } }
+          ],
+          as: "allInvoices"
+        }
+      },
+
+      // STEP 4: Populate agent
+      {
+        $lookup: {
+          from: "agents",
+          localField: "allInvoices.agentId",
+          foreignField: "_id",
+          as: "agentDetails"
+        }
+      },
+
+      // STEP 5: Populate company details
+      {
+        $lookup: {
+          from: "companydetails",
+          localField: "allInvoices.componyDetails",
+          foreignField: "_id",
+          as: "companyDetails"
+        }
+      },
+
+      // STEP 6: Populate standard details
+       {
+  $lookup: {
+    from: "standards",
+    let: { stdId: { $arrayElemAt: ["$_id.standard", 0] } },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $eq: [
+              "$_id",
+              { $toObjectId: "$$stdId" }
+            ]
+          }
+        }
+      }
+    ],
+    as: "standardDetails"
+  }
+}
+
+ ,
+
+      // STEP 7: Clean response
+      {
+        $project: {
+          _id: 0,
+          companyId: "$_id.companyId",
+          standard: "$standardDetails",
+          allInvoices: "$allInvoices",
+          agent: "$agentDetails",
+          companyDetails: "$companyDetails"
+        }
+      }
+    ]);
+
+    return res.status(200).json({ success: true, data: result });
+
   } catch (error) {
-    console.error("Error fetching pending payments:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    console.error("Error:", error);
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+
+
+
 
 
 /**
