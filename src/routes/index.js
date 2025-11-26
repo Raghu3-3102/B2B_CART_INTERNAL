@@ -18,6 +18,7 @@ import StandardRouter from "./standardRoutes/standardRoutes.js";
 import CompanyDetailsRouter from "./companyDetailsRoutes/companyDetailsRouter.js";
 import pendingPaymentsRoutes from "./PendingRoutes/PendingRoutes.js";
 import ProformaInvoice from "./ProformainvoiceRoutes/ProformainvoiceRouter.js";
+import TdsReport from "./TDS_ReportRouter/TDS_ReportRouter.js";
 
 const router = express.Router();
 
@@ -39,6 +40,7 @@ router.use("/standards", StandardRouter);
 router.use("/companyDetails", CompanyDetailsRouter);
 router.use("/Pendingpayments", pendingPaymentsRoutes)
 router.use("/proformaInvoices", ProformaInvoice);
+router.use("/TDSReport", TdsReport);
 // router.use("/users", userRoutes); // Add user module later
 
 export default router;
