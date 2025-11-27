@@ -1,13 +1,12 @@
 import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
 
-
-export const getTDSReport = async (req, res) => {
+export const getGstReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
     const matchStage = {};
 
-    // ✅ Date filter (optional)
+    // ✅ Date range filter (optional)
     if (startDate && endDate) {
       matchStage.InvoiceDate = {
         $gte: new Date(startDate),
@@ -18,25 +17,25 @@ export const getTDSReport = async (req, res) => {
     const result = await Invoice.aggregate([
       { $match: matchStage },
 
-      // Only TDS of INR invoices
+      // Only GST of INR invoices
       {
         $addFields: {
-          tdsAmountOnlyINR: {
+          gstAmountOnlyINR: {
             $cond: [
               { $eq: ["$currency", "INR"] },
-              "$TotalTDSAmount",
+              "$TotalGSTAmount",
               0
             ]
           }
         }
       },
 
-      // Final grouped results
+      // Final group
       {
         $group: {
           _id: null,
           totalInvoiceCount: { $sum: 1 },
-          totalTDSAmount: { $sum: "$tdsAmountOnlyINR" }
+          totalGSTAmount: { $sum: "$gstAmountOnlyINR" }
         }
       }
     ]);
@@ -44,18 +43,17 @@ export const getTDSReport = async (req, res) => {
     if (result.length === 0) {
       return res.status(200).json({
         totalInvoiceCount: 0,
-        totalTDSAmount: 0
+        totalGSTAmount: 0
       });
     }
 
     return res.status(200).json(result[0]);
 
   } catch (error) {
-    console.error("TDS Report Error:", error);
+    console.error("GST Report Error:", error);
     return res.status(500).json({
       message: "Server error",
       error: error.message
     });
   }
 };
-
