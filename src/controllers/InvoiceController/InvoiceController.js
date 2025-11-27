@@ -194,7 +194,8 @@ export const getInvoiceById = async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
       .populate("agentId")
-      .populate("componyDetails");
+      .populate("componyDetails")
+      .populate("standard");
 
     if (!invoice)
       return res.status(404).json({ message: "Invoice not found" });
