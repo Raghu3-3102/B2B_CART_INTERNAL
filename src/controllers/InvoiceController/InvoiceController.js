@@ -192,14 +192,43 @@ export const getAllInvoices = async (req, res) => {
  */
 export const getInvoiceById = async (req, res) => {
   try {
-    const invoice = await Invoice.findById(req.params.id).populate("agentId").populate("componyDetails");
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+    const invoice = await Invoice.findById(req.params.id)
+      .populate("agentId")
+      .populate("componyDetails");
 
-    return res.status(200).json({ success: true, invoice });
+    if (!invoice)
+      return res.status(404).json({ message: "Invoice not found" });
+
+    // ------------------------------
+    // Extract required matching fields
+    // ------------------------------
+    const companyId = invoice.companyId;
+    const standardList = invoice.standard; // array
+
+    // ------------------------------
+    // Find all invoices of same company + same standard
+    // Exclude THIS invoice (_id != req.params.id)
+    // ------------------------------
+    const relatedInvoices = await Invoice.find({
+      companyId: companyId,
+      standard: { $in: standardList },   // match any standard in array
+      _id: { $ne: req.params.id }        // exclude current invoice
+    })
+      .populate("agentId")
+      .populate("componyDetails");
+
+    return res.status(200).json({
+      success: true,
+      invoice,
+      relatedInvoices, // previous + similar invoices
+    });
+
   } catch (error) {
-    return res.status(500).json({ success: false, error });
+    console.error("Error fetching invoice:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 
 /**
