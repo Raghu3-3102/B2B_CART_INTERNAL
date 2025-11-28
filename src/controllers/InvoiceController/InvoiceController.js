@@ -3,6 +3,7 @@ import Agent from "../../models/AgentModel/AgentModel.js";
 import { permissionMiddleware } from "../../middleware/PermissionMidilewere.js";
 import ComponyModel from "../../models/componyModel/ComponyModel.js";
 import Standard from "../../models/StandardModel/StandardModel.js";
+import mongoose from "mongoose";
 /**
  * ✅ Create Invoice (with file upload)
  */
@@ -190,6 +191,7 @@ export const getAllInvoices = async (req, res) => {
 /**
  * ✅ Get Invoice By ID
  */
+
 export const getInvoiceById = async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
@@ -204,7 +206,11 @@ export const getInvoiceById = async (req, res) => {
     // Extract required matching fields
     // ------------------------------
     const companyId = invoice.companyId;
-    const standardList = invoice.standard; // array
+
+    // Convert standard STRING IDs → ObjectId
+    const standardList = invoice.standard.map(id =>
+      new mongoose.Types.ObjectId(id)
+    );
 
     // ------------------------------
     // Find all invoices of same company + same standard
@@ -212,16 +218,17 @@ export const getInvoiceById = async (req, res) => {
     // ------------------------------
     const relatedInvoices = await Invoice.find({
       companyId: companyId,
-      standard: { $in: standardList },   // match any standard in array
-      _id: { $ne: req.params.id }        // exclude current invoice
+      standard: { $in: standardList },
+      _id: { $ne: req.params.id },
     })
       .populate("agentId")
-      .populate("componyDetails");
+      .populate("componyDetails")
+      .populate("standard");
 
     return res.status(200).json({
       success: true,
       invoice,
-      relatedInvoices, // previous + similar invoices
+      relatedInvoices,
     });
 
   } catch (error) {
@@ -229,6 +236,7 @@ export const getInvoiceById = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 
 
