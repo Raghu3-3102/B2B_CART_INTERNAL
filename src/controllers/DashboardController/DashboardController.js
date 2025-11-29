@@ -7,12 +7,27 @@ import Agent from "../../models/AgentModel/AgentModel.js";
 
 export const getDashboardData = async (req, res) => {
   try {
-    // ******** TOTAL COUNTS ******** //
+    // ******** TOTAL PROFORMA / COMPANIES ******** //
     const totalProforma = await proformaInvoice.countDocuments();
     const totalCompanies = await Company.countDocuments();
-    const totalInvoices = await Invoice.countDocuments();
 
-    // ******** CALCULATE TOTAL GST / TDS / PENDING ******** //
+    // ******** TOTAL UNIQUE INVOICE COUNT (companyId + standard) ******** //
+    const invoices = await Invoice.find().select("companyId standard").lean();
+
+    const uniqueSet = new Set();
+
+    invoices.forEach(inv => {
+      if (!inv.companyId || !inv.standard) return;
+
+      inv.standard.forEach(std => {
+        const key = `${inv.companyId}_${std}`;
+        uniqueSet.add(key);
+      });
+    });
+
+    const totalInvoices = uniqueSet.size; // 🔥 FIXED COUNT
+
+    // ******** TOTAL GST / TDS / PENDING ******** //
     const stats = await Invoice.aggregate([
       {
         $group: {
@@ -44,7 +59,7 @@ export const getDashboardData = async (req, res) => {
       totalPendingPayment: 0,
     };
 
-    // ******** RECENT 2 RECORDS ******** //
+    // ******** RECENT 3 DATA ******** //
     const recentProforma = await proformaInvoice.find().sort({ proformaInvoiceDate: -1 }).limit(3);
     const recentCompanies = await Company.find().sort({ createdAt: -1 }).limit(3);
     const recentInvoices = await Invoice.find().sort({ InvoiceDate: -1 }).limit(3);
@@ -62,12 +77,11 @@ export const getDashboardData = async (req, res) => {
       totals: {
         totalProforma,
         totalCompanies,
-        totalInvoices,
+        totalInvoices,  // 🔥 Now Correct + Unique (companyId + standard)
         totalGST: s.totalGST,
         totalTDS: s.totalTDS,
         totalPendingPayment: s.totalPendingPayment,
       },
-
       recent: {
         proforma: recentProforma,
         companies: recentCompanies,
@@ -82,6 +96,7 @@ export const getDashboardData = async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 };
+
 
 
 export const getAgentwiseDataForChart = async (req, res) => {
