@@ -1,8 +1,8 @@
 import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
 import Company from "../../models/componyModel/ComponyModel.js";
 import proformaInvoice from "../../models/ProformainvoiceModel/ProformainvoiceModel.js";
-
 import Agent from "../../models/AgentModel/AgentModel.js";
+
 
 
 import { buildTaxAggregationStages } from "../../utils/TaxAggregationStages.js";
@@ -239,6 +239,31 @@ export const getAgentMonthwiseClosure = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+export const getAgentTargetGraph = async (req, res) => {
+  try {
+    // Fetch all agents with required fields
+    const agents = await Agent.find({}, "agentName targetAchieved");
+
+    // Format for graph (x: name, y: achieved)
+    const graphData = agents.map(agent => ({
+      agentName: agent.agentName,
+      achievedAmount: agent.targetAchieved
+    }));
+
+    res.status(200).json({
+      success: true,
+      graphData
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error while fetching graph data",
+      error
+    });
   }
 };
 

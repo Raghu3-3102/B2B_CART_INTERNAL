@@ -4,7 +4,8 @@ import {
     getAllAgents,
     getAgentById,
     updateAgent,
-    deleteAgent
+    deleteAgent,
+    updateTarget
 
     
 } from "../../controllers/AgentController/AgentController.js";
@@ -20,5 +21,6 @@ router.get("/",authMiddleware, getAllAgents);
 router.get("/:id",authMiddleware, getAgentById);
 router.put("/:id",authMiddleware,permissionMiddleware(),updateAgent)
 router.delete("/:id",authMiddleware,permissionMiddleware(),deleteAgent)
+router.patch("/update-target",updateTarget)
 
 export default router;

@@ -63,49 +63,24 @@ export const getAgentById = async (req, res) => {
 export const updateAgent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { agentName, agentEmail, agentNumber, target } = req.body;
+    const { agentName, agentEmail, agentNumber } = req.body;
 
     // 1️⃣ Fetch agent
     const agent = await Agent.findById(id);
     if (!agent) {
       return res.status(404).json({
         message: "Agent not found",
-        success: false
+        success: false,
       });
     }
 
-    // Ensure both are numbers
-    const oldTarget = Number(agent.target) || 0;
-    const achieved = Number(agent.targetAchieved) || 0;
-
-    let finalTarget = oldTarget;
-
-    // 2️⃣ If admin updates target
-    if (target !== undefined) {
-      const newTarget = Number(target);
-
-      if (isNaN(newTarget)) {
-        return res.status(400).json({
-          success: false,
-          message: "Target must be a valid number"
-        });
-      }
-
-      // remaining amount from old target
-      const remainingOld = oldTarget - achieved;
-
-      // calculate updated target
-      finalTarget = newTarget + remainingOld;
-    }
-
-    // 3️⃣ Update agent
+    // 2️⃣ Update only basic fields (NO target update)
     const updatedAgent = await Agent.findByIdAndUpdate(
       id,
       {
         agentName,
         agentEmail,
         agentNumber,
-        target: finalTarget
       },
       { new: true }
     );
@@ -113,17 +88,18 @@ export const updateAgent = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Agent updated successfully",
-      updatedAgent
+      updatedAgent,
     });
 
   } catch (error) {
     console.error("Error in updateAgent:", error);
     return res.status(500).json({
       success: false,
-      message: "Server Error"
+      message: "Server Error",
     });
   }
 };
+
 
 
 
@@ -151,5 +127,35 @@ export const deleteAgent = async (req, res) => {
   } catch (error) {
     console.error("Error in deleteAgent:", error);
     res.status(500).json({ message: "Server Error", success: false });
+  }
+};
+
+
+export const updateTarget = async (req, res) => {
+  try {
+    const { agentId, newTarget } = req.body;
+
+    const agent = await Agent.findById(agentId);
+    if (!agent) return res.status(404).json({ message: "Agent not found" });
+
+    // Save previous record
+    agent.targetHistory.push({
+      previousTarget: agent.target,
+      previousAchieved: agent.targetAchieved,
+      changedAt: new Date(),
+    });
+
+    // Update to new target
+    agent.target = newTarget;
+
+    await agent.save();
+
+    res.json({
+      message: "Target updated, previous record saved",
+      agent
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
