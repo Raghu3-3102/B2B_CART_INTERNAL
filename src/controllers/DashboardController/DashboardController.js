@@ -43,18 +43,31 @@ export const getDashboardData = async (req, res) => {
         companyId: "$companyId",
         standardId: "$standardId"
       },
-      latestPending: { $first: "$PendingPaymentInINR" } // pick only latest invoice
+      latestPending: { $first: "$PendingPaymentInINR" },  // pick only the latest invoice
+      latestCurrency: { $first: "$currency" },  // capture currency of the latest invoice
+      latestBaseClosureINR: { $first: "$baseClosureAmountINR" }  // capture baseClosureAmountINR if applicable
+    }
+  },
+  {
+    $project: {
+      // Calculate the pending payment based on currency
+      totalPendingPayment: {
+        $cond: {
+          if: { $eq: ["$latestCurrency", "INR"] },  // If INR, use PendingPaymentInINR
+          then: { $toDouble: "$latestPending" },
+          else: { $toDouble: "$latestBaseClosureINR" }  // Otherwise use baseClosureAmountINR
+        }
+      }
     }
   },
   {
     $group: {
       _id: null,
-      totalPendingPayment: {
-        $sum: { $toDouble: "$latestPending" }
-      }
+      totalPendingPayment: { $sum: "$totalPendingPayment" }
     }
   }
 ]);
+
 
 
 
