@@ -246,12 +246,14 @@ export const getAgentMonthwiseClosure = async (req, res) => {
 export const getAgentTargetGraph = async (req, res) => {
   try {
     // Fetch all agents with required fields
-    const agents = await Agent.find({}, "agentName targetAchieved");
+    const agents = await Agent.find({}, "agentName target targetAchieved");
 
     // Format for graph (x: name, y: achieved)
     const graphData = agents.map(agent => ({
       agentName: agent.agentName,
-      achievedAmount: agent.targetAchieved
+      agentTarget: agent.target,
+      achievedAmount: agent.targetAchieved,
+      achievedPercentage: agent.target > 0 ? (agent.targetAchieved / agent.target) * 100 : 0,
     }));
 
     res.status(200).json({
