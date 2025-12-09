@@ -169,7 +169,7 @@ export const createInvoice = async (req, res) => {
 
     if (!existingOther && amountToAdd > 0) {
       await Agent.findByIdAndUpdate(agentId, {
-        $inc: { targetAchieved: amountToAdd },
+        $inc: { targetAchieved: currency !== "INR" ? baseClosureAmountINR : amountToAdd},
       });
     }
 
@@ -197,7 +197,7 @@ export const createInvoice = async (req, res) => {
 export const getInvoiveByStanderdandcomponyName = async (req, res) => {
   try {
     const { standard, companyId } = req.params;
-    console.log("Standard:", standard, "Company ID:", companyId);
+    // console.log("Standard:", standard, "Company ID:", companyId);
     const invoices = await Invoice.find({
       standard: standard,
       companyId: companyId,
@@ -531,7 +531,7 @@ export const getInvoiveByStandrdAndComponyAsATrue = async (req, res) => {
   try {
     const { standard, companyId } = req.params;
 
-    console.log("Standard:", standard, "Company ID:", companyId);
+    // console.log("Standard:", standard, "Company ID:", companyId);
 
     // ✅ First update ALL invoices matching standard + companyId
     await Invoice.updateMany(
@@ -563,7 +563,7 @@ export const getInvoiveByStandrdAndComponyAsAFalse = async (req, res) => {
   try {
     const { standard, companyId } = req.params;
 
-    console.log("Standard:", standard, "Company ID:", companyId);
+    // console.log("Standard:", standard, "Company ID:", companyId);
 
     // ✅ First update ALL invoices matching standard + companyId
     await Invoice.updateMany(
