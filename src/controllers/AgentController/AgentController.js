@@ -4,7 +4,7 @@ import Certification from "../../models/CertificationModel/CertificationModel.js
 // ✅ Create Agent
 export const createAgent = async (req, res) => {
   try {
-    const { agentName, agentEmail, agentNumber,target } = req.body;
+    const { agentName, agentEmail, agentNumber,target, member } = req.body;
     const existingAgent = await Agent.findOne({ agentEmail });
     if (existingAgent) {
       return res
@@ -12,7 +12,7 @@ export const createAgent = async (req, res) => {
         .json({ message: "Agent with this email already exists", success: false });
     }
 
-    const agent = new Agent({ agentName, agentEmail, agentNumber ,target});
+    const agent = new Agent({ agentName, agentEmail, agentNumber ,target, member});
     await agent.save();
     res.status(201).json({ message: "Agent created successfully", agent, success: true });
   } catch (error) {
@@ -69,7 +69,7 @@ export const getAgentById = async (req, res) => {
 export const updateAgent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { agentName, agentEmail, agentNumber } = req.body;
+    const { agentName, agentEmail, agentNumber, member } = req.body;
 
     // 1️⃣ Fetch agent
     const agent = await Agent.findById(id);
@@ -87,6 +87,7 @@ export const updateAgent = async (req, res) => {
         agentName,
         agentEmail,
         agentNumber,
+        member
       },
       { new: true }
     );
