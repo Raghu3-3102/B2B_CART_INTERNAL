@@ -4,10 +4,10 @@ const agentSchema = new mongoose.Schema({
   agentName: { type: String, required: true },
   agentEmail: { type: String, required: true, unique: true },
   agentNumber: { type: String, required: true },
-  member: {type: mongoose.Schema.Types.ObjectId,  },
+  member: {type: mongoose.Schema.Types.ObjectId, ref:"Member" },
 
   // CURRENT TARGET
-  target: { type: mongoose.Schema.Types.ObjectId, ref:"Member" },
+  target: { type: Number, default: 0 },
   targetAchieved: { type: Number, default: 0 },
 
   InvoiceCount: { type: Number, default: 0 },
