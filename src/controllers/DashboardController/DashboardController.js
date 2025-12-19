@@ -29,50 +29,68 @@ export const getDashboardData = async (req, res) => {
     const totalTDS = tdsStats[0]?.totalAmount || 0;
 
     // ******** PENDING PAYMENT ******** //
+//     const pendingStats = await Invoice.aggregate([
+//   {
+//     $sort: {
+//       companyId: 1,
+//       standardId: 1,
+//       InvoiceDate: -1  // latest first
+//     }
+//   },
+//   {
+//     $group: {
+//       _id: {
+//         companyId: "$companyId",
+//         standardId: "$standardId"
+//       },
+//       latestPending: { $first: "$PendingPaymentInINR" },  // pick only the latest invoice
+//       latestCurrency: { $first: "$currency" },  // capture currency of the latest invoice
+//       latestBaseClosureINR: { $first: "$baseClosureAmountINR" }  // capture baseClosureAmountINR if applicable
+//     }
+//   },
+//   {
+//     $project: {
+//       // Calculate the pending payment based on currency
+//       totalPendingPayment: {
+//         $cond: {
+//           if: { $eq: ["$latestCurrency", "INR"] },  // If INR, use PendingPaymentInINR
+//           then: { $toDouble: "$latestPending" },
+//           else: { $toDouble: "$latestBaseClosureINR" }  // Otherwise use baseClosureAmountINR
+//         }
+//       }
+//     }
+//   },
+//   {
+//     $group: {
+//       _id: null,
+//       totalPendingPayment: { $sum: "$totalPendingPayment" }
+//     }
+//   }
+// ]);
+
     const pendingStats = await Invoice.aggregate([
-  {
-    $sort: {
-      companyId: 1,
-      standardId: 1,
-      InvoiceDate: -1  // latest first
-    }
-  },
-  {
-    $group: {
-      _id: {
-        companyId: "$companyId",
-        standardId: "$standardId"
+      {
+        $match:
+          {
+            IsCompleted: {
+              $ne: true
+            }
+          }
       },
-      latestPending: { $first: "$PendingPaymentInINR" },  // pick only the latest invoice
-      latestCurrency: { $first: "$currency" },  // capture currency of the latest invoice
-      latestBaseClosureINR: { $first: "$baseClosureAmountINR" }  // capture baseClosureAmountINR if applicable
-    }
-  },
-  {
-    $project: {
-      // Calculate the pending payment based on currency
-      totalPendingPayment: {
-        $cond: {
-          if: { $eq: ["$latestCurrency", "INR"] },  // If INR, use PendingPaymentInINR
-          then: { $toDouble: "$latestPending" },
-          else: { $toDouble: "$latestBaseClosureINR" }  // Otherwise use baseClosureAmountINR
-        }
-      }
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      totalPendingPayment: { $sum: "$totalPendingPayment" }
-    }
-  }
-]);
+      {
+        $group:
+        // group by currenct and sum the pendingPayment
+          {
+            _id: "$currency",
+            totalPendingAmtINR: {
+              $sum: "$PendingPaymentInINR"
+            }
+          }
+      }])
 
 
-
-
-    const totalPendingPayment =
-      pendingStats[0]?.totalPendingPayment || 0;
+    // const totalPendingPayment =
+    //   pendingStats[0]?.totalPendingPayment || 0;
 
     // ******** RECENT DATA ******** //
     const recentProforma = await proformaInvoice
@@ -114,7 +132,7 @@ export const getDashboardData = async (req, res) => {
         totalGST,
         totalTDS,
 
-        totalPendingPayment
+        totalPendingPayment : pendingStats
       },
       recent: {
         proforma: recentProforma,
