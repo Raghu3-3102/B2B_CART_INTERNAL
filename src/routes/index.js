@@ -21,6 +21,7 @@ import ProformaInvoice from "./ProformainvoiceRoutes/ProformainvoiceRouter.js";
 import TdsReport from "./TDS_ReportRouter/TDS_ReportRouter.js";
 import GstReport from "./GstReportRoutes/GstReportRouter.js";
 import DashboardRouter from "./DashboardRouter/DashboardRouter.js";
+import MemberRoutes from "./MemberRoutes/MemberRoutes.js";
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.use("/proformaInvoices", ProformaInvoice);
 router.use("/TDSReport", TdsReport);
 router.use("/GstReport", GstReport);
 router.use("/dashboard", DashboardRouter);
+router.use("/members", MemberRoutes);
 // router.use("/users", userRoutes); // Add user module later
 
 export default router;
