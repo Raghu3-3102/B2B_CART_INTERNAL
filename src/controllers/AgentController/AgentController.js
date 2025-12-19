@@ -24,6 +24,11 @@ export const createAgent = async (req, res) => {
 // ✅ Get All Agents (with Pagination)
 export const getAllAgents = async (req, res) => {
   try {
+    const { noPagination } = req.query;
+    if (noPagination === 'true') {
+      const agents = await Agent.find();
+      return res.status(200).json({ success: true, agents });
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -43,6 +48,7 @@ export const getAllAgents = async (req, res) => {
     res.status(500).json({ message: "Server Error", success: false });
   }
 };
+
 
 // ✅ Get Agent by ID
 export const getAgentById = async (req, res) => {
