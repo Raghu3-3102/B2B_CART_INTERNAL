@@ -160,45 +160,45 @@ export const getAgentwiseDataForChart = async (req, res) => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
-    const agents = await Agent.find();
-    const finalData = [];
+    // const agents = await Agent.find();
+    // const finalData = [];
 
-    for (const agent of agents) {
-      const invoices = await Invoice.find({
-        agentId: agent._id,
-        InvoiceDate: { $gte: startDate, $lt: endDate },
-      }).lean();
+    // for (const agent of agents) {
+    //   const invoices = await Invoice.find({
+    //     agentId: agent._id,
+    //     InvoiceDate: { $gte: startDate, $lt: endDate },
+    //   }).lean();
 
-      const groups = {};
+    //   const groups = {};
 
-      invoices.forEach(inv => {
-        if (!inv.companyId || !inv.standard || inv.standard.length === 0) return;
+    //   invoices.forEach(inv => {
+    //     if (!inv.companyId || !inv.standard || inv.standard.length === 0) return;
 
-        inv.standard.forEach(std => {
-          const key = `${inv.companyId}-${std}`;
+    //     inv.standard.forEach(std => {
+    //       const key = `${inv.companyId}-${std}`;
 
-          if (!groups[key]) {
-            const closure =
-              inv.currency === "INR"
-                ? inv.baseClosureAmount
-                : inv.baseClosureAmountINR;
+    //       if (!groups[key]) {
+    //         const closure =
+    //           inv.currency === "INR"
+    //             ? inv.baseClosureAmount
+    //             : inv.baseClosureAmountINR;
 
-            groups[key] = closure;
-          }
-        });
-      });
+    //         groups[key] = closure;
+    //       }
+    //     });
+    //   });
 
-      const totalClosureAmount = Object.values(groups).reduce((a, b) => a + b, 0);
+    //   const totalClosureAmount = Object.values(groups).reduce((a, b) => a + b, 0);
 
-      finalData.push({
-        agentName: agent.agentName,
-        agentId: agent._id,
-        totalClosureAmount,
-      });
-    }
+    //   finalData.push({
+    //     agentName: agent.agentName,
+    //     agentId: agent._id,
+    //     totalClosureAmount,
+    //   });
+    // }
 
-    finalData.sort((a, b) => b.totalClosureAmount - a.totalClosureAmount);
-
+    // finalData.sort((a, b) => b.totalClosureAmount - a.totalClosureAmount);
+    const finalData = await Invoice.aggregate(AgentWiseDataAggregation(startDate, endDate))
     return res.status(200).json({
       success: true,
       chartData: finalData,
@@ -300,5 +300,75 @@ export const getAgentTargetGraph = async (req, res) => {
   }
 };
 
+const AgentWiseDataAggregation = (startDate, endDate) => {
+  const pipeline = [
+    {
+      $match: {
+        InvoiceDate: {
+          $gte: 
+            startDate
+          ,
+          $lt: 
+            endDate
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          agent: "$agentId",
+          currency: "$currency"
+        },
+        total: {
+          $sum: {
+            $cond: {
+              if: {
+                $eq: ["$currency", "INR"]
+              },
+              then: "$baseClosureAmount",
+              else: "$baseClosureAmountINR"
+            }
+          }
+        }
+      }
+    },
+    {
+      $group:
+        {
+          _id: "$_id.agent",
+          total: {
+            $sum: "$total"
+          }
+        }
+    },
+    {
+      $lookup: {
+        from: "agents",
+        localField: "_id",
+        foreignField: "_id",
+        as: "data"
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        agentId: "$_id",
+        agentName: {
+          $arrayElemAt: ["$data.agentName", 0]
+        },
+        totalClosureAmount: "$total"
+      }
+    },
+    {
+      $sort: {
+        totalClosureAmount: -1
+      }
+    }
+    // {
+    //   $count: "string"
+    // }
+  ]
 
+  return pipeline
+}
 
