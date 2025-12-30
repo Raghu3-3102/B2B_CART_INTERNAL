@@ -1,4 +1,5 @@
 import Manager from "../models/ManagerModel/ManagerModel.js";
+import { getManagerWithTotal } from "./managerAggregation.js";
 
 /**
  * Create a new manager
@@ -27,7 +28,7 @@ export const getAllManagers = async (options = {}) => {
     const { page, limit, noPagination } = options;
 
     if (noPagination === "true" || noPagination === true) {
-      const managers = await Manager.find().sort({ createdAt: -1 });
+      const managers = await Manager.aggregate(getManagerWithTotal());
       return { success: true, managers };
     }
 
@@ -35,10 +36,7 @@ export const getAllManagers = async (options = {}) => {
     const limitNum = parseInt(limit) || 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const managers = await Manager.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
+    const managers = await Manager.aggregate(getManagerWithTotal(skip, limit))
 
     const totalManagers = await Manager.countDocuments();
 

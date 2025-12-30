@@ -12,6 +12,7 @@ const agentSchema = new mongoose.Schema({
 
   InvoiceCount: { type: Number, default: 0 },
   InvoiceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Invoice" }],
+  managerId: { type: mongoose.Schema.Types.ObjectId, ref: "Manager" }, // if agent is also manager
 
   // ⭐ TARGET HISTORY ⭐
   targetHistory: [
