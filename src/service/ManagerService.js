@@ -1,5 +1,6 @@
+import Agent from "../models/AgentModel/AgentModel.js";
 import Manager from "../models/ManagerModel/ManagerModel.js";
-import { getManagerWithTotal } from "./managerAggregation.js";
+import { getManagerWithTotal, ManagerMonthlyPerformance } from "./managerAggregation.js";
 
 /**
  * Create a new manager
@@ -114,3 +115,13 @@ export const deleteManager = async (id) => {
 };
 
 
+export const managerMonthlyPerformance = async (startDate, endDate) => {
+  try {
+   
+    const data = await Agent.aggregate(ManagerMonthlyPerformance(startDate, endDate))
+
+    return data;
+  } catch (error) {
+    throw error;
+  } 
+}

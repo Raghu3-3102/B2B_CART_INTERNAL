@@ -28,6 +28,13 @@ async function run() {
   );
   console.log("Unset member:", res2.modifiedCount);
 
+  // Remove managerId field
+  const res3 = await Agent.updateMany(
+    { managerId: { $exists: true } },
+    { $unset: { manager: "" } }
+  );
+  console.log("Unset member:", res3.modifiedCount);
+
   await mongoose.disconnect();
   console.log("Done");
 }

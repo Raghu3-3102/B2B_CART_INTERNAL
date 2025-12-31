@@ -2,6 +2,7 @@ import Invoice from "../../models/InvoiceModel/InvoiceModel.js";
 import Company from "../../models/componyModel/ComponyModel.js";
 import proformaInvoice from "../../models/ProformainvoiceModel/ProformainvoiceModel.js";
 import Agent from "../../models/AgentModel/AgentModel.js";
+import mongoose from "mongoose";
 
 
 
@@ -273,6 +274,81 @@ export const getAgentMonthwiseClosure = async (req, res) => {
   }
 };
 
+export const getAgentMonthwiseClosurev2 = async (req, res) => {
+  try {
+    const { agentId, year } = req.query;
+
+    if (!agentId || !year) {
+      return res.status(400).json({
+        success: false,
+        message: "agentId and year required"
+      });
+    }
+
+    const startYear = new Date(year, 0, 1);
+    const endYear = new Date(year, 11, 31, 23, 59, 59);
+
+    const data = await Invoice.aggregate([
+      {
+        $match: {
+          agentId: new mongoose.Types.ObjectId(agentId),
+          InvoiceDate: { $gte: startYear, $lte: endYear },
+          companyId: { $ne: null },
+          standard: { $exists: true, $ne: [] }
+        }
+      },
+      {
+        $addFields: {
+          month: { $month: "$InvoiceDate" },
+          closure: {
+            $cond: [
+              { $eq: ["$currency", "INR"] },
+              { $ifNull: ["$baseClosureAmount", 0] },
+              { $ifNull: ["$baseClosureAmountINR", 0] }
+            ]
+          }
+        }
+      },
+      { $unwind: "$standard" },
+      {
+        $group: {
+          _id: {
+            month: "$month",
+            companyId: "$companyId",
+            standard: "$standard"
+          },
+          closure: { $first: "$closure" }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.month",
+          total: { $sum: "$closure" }
+        }
+      }
+    ]);
+
+    const monthWise = {
+      Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0,
+      Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0
+    };
+
+    const months = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+
+    data.forEach(({ _id, total }) => {
+      monthWise[months[_id - 1]] = total;
+    });
+
+    return res.json({ success: true, agentId, year, monthWise });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}; 
 
 export const getAgentTargetGraph = async (req, res) => {
   try {
@@ -356,11 +432,19 @@ const AgentWiseDataAggregation = (startDate, endDate) => {
         agentName: {
           $arrayElemAt: ["$data.agentName", 0]
         },
-        totalClosureAmount: "$total"
+        totalClosureAmount: "$total",
+        target : {$arrayElemAt : ["$data.target",0]},
+        percentage : {
+            $multiply: [
+            { $divide: ["$total", {$arrayElemAt : ["$data.target", 0] }] },
+            100
+            ]
+          }
       }
     },
     {
       $sort: {
+        percentage: -1,
         totalClosureAmount: -1
       }
     }
